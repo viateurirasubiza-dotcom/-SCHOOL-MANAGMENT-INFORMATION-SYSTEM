@@ -8,7 +8,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="description" content="Smart School Management Information System (MIS) for managing students, marks, reports, attendance and school administration online in Rwanda,And it is develpped by student called IRASUBIZA VIATEUR who ha orgin in RUBAVU DISTRICT IN WESTERN PROVINCE AND ALSO HE LEARN BACHELORS DEGREE IN MATHEMETICS AND COMPUTER SCIENCES IN EAST AFRICAN UNIVERSITY LOCATED IN NYAGATARE DISTRICT AND HE DEVELOPMORE APP ON MIT INVENTOR AND HE CREATE AI IN HUGGING FACE ALSO HE LEARN IN COLLEGE MARANATHA FROM 2022-2025 IN COMPUTERSYSTEM AND ARCHITECTURE AND ALSO HE WAS A SPECIAL STUDENT IN ALL CARRIERS.">
+<meta name="description" content="Smart School Management Information System (MIS) for managing students, marks, reports, attendance and school administration online in Rwanda,And it is developed by student called IRASUBIZA VIATEUR who has orgin in RUBAVU DISTRICT IN WESTERN PROVINCE AND ALSO HE LEARN BACHELORS DEGREE IN MATHEMETICS AND COMPUTER SCIENCES IN EAST AFRICAN UNIVERSITY LOCATED IN NYAGATARE DISTRICT AND HE DEVELOPMORE APP ON MIT INVENTOR AND HE CREATE AI IN HUGGING FACE ALSO HE LEARN IN COLLEGE MARANATHA FROM 2022-2025 IN COMPUTERSYSTEM AND ARCHITECTURE AND ALSO HE WAS A SPECIAL STUDENT IN ALL CARRIERS.">
 <meta name="keywords" content="School MIS, Student Management System, Rwanda School System, Online School System, Student Marks, Attendance System, School Reports">
 <meta name="author" content="Viateur Irasubiza">
 
@@ -1566,10 +1566,8 @@ else return "Poor";
 };
 window.rank = function (students, cls, terms) {
 
-  // 1. filter students of same class
   let filtered = students.filter(s => s.class === cls);
 
-  // 2. group by student (name or SDMS)
   let map = {};
 
   filtered.forEach(s => {
@@ -1585,29 +1583,18 @@ window.rank = function (students, cls, terms) {
 
     let marks = s.marks || {};
 
-    // 3. calculate total marks for all subjects
-    for (let subject in marks) {
-
-      let m = marks[subject] || { mid: 0, exam: 0 };
-
+    // sum ALL subjects properly
+    Object.keys(marks).forEach(sub => {
+      let m = marks[sub] || { mid: 0, exam: 0 };
       map[key].total += (Number(m.mid) + Number(m.exam));
-    }
+    });
 
   });
 
-  // 4. convert to array
   let arr = Object.values(map);
 
-  // 5. find max possible score (safe estimate)
-  let maxScore = arr.length * 100;
-
-  // 6. convert to percentage
-  arr.forEach(x => {
-    x.percent = maxScore > 0 ? Math.round((x.total / maxScore) * 100) : 0;
-  });
-
-  // 7. sort highest first
-  arr.sort((a, b) => b.percent - a.percent);
+  // ❗ normalize ranking (NO fake percentage)
+  arr.sort((a, b) => b.total - a.total);
 
   return arr;
 };
@@ -1659,11 +1646,14 @@ window.view = async function(id){
     // 5. Ranking
     let posList = rank(students, s.class, terms);
 
-    let position = posList.findIndex(
-      x => x.student.sdms === s.sdms || x.student.name === s.name
-    ) + 1;
+let positionIndex = posList.findIndex(x =>
+  x.student.sdms === s.sdms &&
+  x.student.name === s.name
+);
 
-    let outOf = posList.length;
+let position = positionIndex === -1 ? "N/A" : positionIndex + 1;
+
+let outOf = posList.length;
 
     // 6. Build report HTML
     let html = `
