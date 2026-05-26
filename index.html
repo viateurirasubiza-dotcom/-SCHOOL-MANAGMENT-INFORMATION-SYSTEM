@@ -560,10 +560,27 @@ Upload School Logo
 
     <button onclick="addStudentToClass()">Add Student</button>
 
-    <hr>
+    <button onclick="toggleTable('classTable')">Hide/Show Class Students</button>
+<button onclick="toggleTable('savedTable')">Hide/Show Saved Students</button>
 
+       <hr>
+<br><hr>
+
+<h3>Class Students View</h3>
+
+<table id="classTable" border="1" width="100%">
+  <tr>
+    <th>Name</th>
+    <th>Class</th>
+    <th>SDMS</th>
+    <th>Action</th>
+  </tr>
+
+  <tbody id="classList"></tbody>
+</table>
+ <hr>
     <h3>Saved Students</h3>
-    <table border="1" width="100%">
+    <table id="savedTable" border="1" width="100%">
       <tr>
         <th>Name</th>
         <th>Class</th>
@@ -1869,7 +1886,7 @@ window.clearAll = async function () {
     alert("Delete all failed");
   }
 };
-  window.loadClassStudents = function () {
+ window.loadClassStudents = function () {
 
   let cls = document.getElementById("printClassSelect").value;
 
@@ -1880,7 +1897,20 @@ window.clearAll = async function () {
 
   let students = JSON.parse(localStorage.getItem("students") || "[]");
 
-  let filtered = students.filter(s => s.class === cls);
+  let uniqueMap = {};
+
+  students
+    .filter(s => s.class === cls)
+    .forEach(s => {
+
+      let key = (s.sdms || s.name) + "_" + s.class;
+
+      if (!uniqueMap[key]) {
+        uniqueMap[key] = s;
+      }
+    });
+
+  let filtered = Object.values(uniqueMap);
 
   let html = "";
 
@@ -1897,7 +1927,10 @@ window.clearAll = async function () {
     `;
   });
 
-  document.getElementById("list").innerHTML = html;
+  // 🔥 IMPORTANT: FORCE CLEAR BEFORE SET
+  const tableBody = document.getElementById("classList");
+  tableBody.innerHTML = "";
+  tableBody.innerHTML = html;
 };
   window.deleteClassStudents = async function () {
 
@@ -1927,6 +1960,18 @@ window.clearAll = async function () {
   alert("Class deleted ✔");
 
   window.load();
+};
+  window.toggleTable = function (id) {
+
+  let table = document.getElementById(id);
+
+  if (!table) return;
+
+  if (table.style.display === "none") {
+    table.style.display = "table";
+  } else {
+    table.style.display = "none";
+  }
 };
 </script>
 </body>
