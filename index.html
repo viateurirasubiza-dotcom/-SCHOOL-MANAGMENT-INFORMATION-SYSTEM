@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Ni<!DOCTYPE html>
 <html lang="en">
   
 <head>
@@ -1960,6 +1960,18 @@ window.clearAll = async function () {
   alert("Class deleted ✔");
 
   window.load();
+};
+  window.toggleTable = function (id) {
+
+  let table = document.getElementById(id);
+
+  if (!table) return;
+
+  if (table.style.display === "none") {
+    table.style.display = "table";
+  } else {
+    table.style.display = "none";
+  }
 };
   window.toggleTable = function (id) {
 
