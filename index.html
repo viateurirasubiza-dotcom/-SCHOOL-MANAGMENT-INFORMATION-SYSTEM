@@ -1014,13 +1014,32 @@ window.printAllReports = function () {
 
   try {
 
-    let students = JSON.parse(localStorage.getItem("students") || "[]");
+    // SELECT CLASS
+    let selectedClass = prompt(
+      "Enter Class to Print (Example: P1, P2, S1, S6)"
+    );
 
-    if (!students.length) {
-      alert("No students to print");
+    if (!selectedClass) {
+      alert("Class required");
       return;
     }
 
+    // GET ALL STUDENTS
+    let students = JSON.parse(
+      localStorage.getItem("students") || "[]"
+    );
+
+    // FILTER BY CLASS
+    students = students.filter(
+      s => s.class === selectedClass
+    );
+
+    if (!students.length) {
+      alert("No students found in " + selectedClass);
+      return;
+    }
+
+    // CHECK FUNCTIONS
     if (typeof rank !== "function") {
       alert("rank() function missing");
       return;
@@ -1033,49 +1052,102 @@ window.printAllReports = function () {
 
     let printContent = "";
 
+    // LOOP STUDENTS
     students.forEach(s => {
 
       let terms = [];
 
-      if (s.term === "TERM1") terms = ["TERM1"];
-      else if (s.term === "TERM2") terms = ["TERM1", "TERM2"];
-      else if (s.term === "TERM3") terms = ["TERM1", "TERM2", "TERM3"];
-      else terms = [s.term];
+      if (s.term === "TERM1") {
+        terms = ["TERM1"];
+      }
 
+      else if (s.term === "TERM2") {
+        terms = ["TERM1", "TERM2"];
+      }
+
+      else if (s.term === "TERM3") {
+        terms = ["TERM1", "TERM2", "TERM3"];
+      }
+
+      else {
+        terms = [s.term];
+      }
+
+      // RANKING
       let posList = rank(students, s.class, terms);
 
       let position = posList.findIndex(
-        x => x.student.sdms === s.sdms || x.student.name === s.name
+        x =>
+          x.student.sdms === s.sdms ||
+          x.student.name === s.name
       ) + 1;
 
       let outOf = posList.length;
 
+      // POSITION REMARK
       let positionRemark =
-        position === 1 ? "1st Position - Excellent"
-        : position <= 3 ? "Top Performer"
-        : "Keep Improving";
+        position === 1
+          ? "1st Position - Excellent"
+          : position <= 3
+          ? "Top Performer"
+          : "Keep Improving";
 
-      let all = students.filter(x =>
-        x.name === s.name &&
-        x.class === s.class &&
-        x.sdms === s.sdms
+      // GET ALL RECORDS OF SAME STUDENT
+      let all = students.filter(
+        x =>
+          x.name === s.name &&
+          x.class === s.class &&
+          x.sdms === s.sdms
       );
 
+      // BUILD REPORT
       let html = `
         <div class="report">
 
-          <div class="watermark">SCHOOL MIS</div>
-
-          <div style="text-align:center;">
-            <img src="${localStorage.getItem('schoolLogo') || ''}"
-              style="width:90px;height:90px;border-radius:50%;border:2px solid #000;object-fit:contain;">
-            <h2 style="margin:5px 0;">STUDENT REPORT CARD</h2>
-            <h4 style="margin:0;">Academic Performance Report</h4>
+          <div class="watermark">
+            SCHOOL MIS
           </div>
 
-          <div class="school-info" style="text-align:center;font-size:13px;margin:10px 0;">
-            <p><b>School:</b> SCHOOL NAME</p>
-            <p><b>Academic Year:</b> ${new Date().getFullYear()}/${new Date().getFullYear()+1}</p>
+          <div style="text-align:center;">
+
+            <img 
+              src="${localStorage.getItem('schoolLogo') || ''}"
+              style="
+                width:80px;
+                height:80px;
+                border-radius:50%;
+                border:2px solid #000;
+                object-fit:contain;
+              "
+            >
+
+            <h2 style="margin:5px 0;">
+              STUDENT REPORT CARD
+            </h2>
+
+            <h4 style="margin:0;">
+              Academic Performance Report
+            </h4>
+
+          </div>
+
+          <div
+            style="
+              text-align:center;
+              font-size:12px;
+              margin:6px 0;
+            "
+          >
+
+            <p>
+              <b>School:</b> SCHOOL NAME
+            </p>
+
+            <p>
+              <b>Academic Year:</b>
+              ${new Date().getFullYear()}/${new Date().getFullYear() + 1}
+            </p>
+
           </div>
 
           <div class="line-input">
@@ -1114,45 +1186,106 @@ window.printAllReports = function () {
 
           ${buildTable(all, terms)}
 
-          <br>
+          <div
+            style="
+              border:1px solid #000;
+              padding:8px;
+              font-size:11px;
+              line-height:1.5;
+              margin-top:8px;
+            "
+          >
 
-          <div style="border:1px solid #000;padding:10px;font-size:12px;line-height:1.6;margin-top:10px;">
-            <p><b>Teacher Remarks:</b> ____________________________________________</p>
-            <p><b>Class Teacher:</b> ____________________</p>
-            <p><b>Signature:</b> ____________________</p>
-            <p><b>Date:</b> ____________________</p>
-            <p><b>School Fees:</b> ____________________</p>
+            <p>
+              <b>Teacher Remarks:</b>
+              ____________________________________________
+            </p>
+
+            <p>
+              <b>Class Teacher:</b>
+              ____________________
+            </p>
+
+            <p>
+              <b>Signature:</b>
+              ____________________
+            </p>
+
+            <p>
+              <b>Date:</b>
+              ____________________
+            </p>
+
+            <p>
+              <b>School Fees:</b>
+              ____________________
+            </p>
+
           </div>
 
         </div>
       `;
 
       printContent += html;
+
     });
 
+    // OPEN PRINT WINDOW
     let printWindow = window.open("", "_blank");
 
+    // POPUP FIX
+    if (!printWindow) {
+
+      alert(
+        "Popup blocked. Allow popups or use Live Server."
+      );
+
+      return;
+    }
+
+    // PRINT PAGE
     printWindow.document.write(`
+
       <html>
+
       <head>
-        <title>All Reports</title>
+
+        <title>
+          ${selectedClass} Reports
+        </title>
 
         <style>
 
           body{
-            font-family: Arial;
+            font-family:Arial;
             margin:0;
-            padding:10px;
+            padding:5px;
             background:white;
           }
 
           .report{
+
             border:3px solid #000;
-            padding:15px;
-            margin-bottom:20px;
+
+            padding:10px;
+
+            margin-bottom:10px;
+
             position:relative;
-            page-break-after:always;
+
+            width:100%;
+
+            min-height:95vh;
+
+            box-sizing:border-box;
+
+            overflow:hidden;
+
+            page-break-inside:avoid;
+
             break-inside:avoid;
+
+            page-break-after:always;
           }
 
           .report:last-child{
@@ -1164,55 +1297,85 @@ window.printAllReports = function () {
             top:40%;
             left:20%;
             font-size:70px;
-            opacity:0.07;
+            opacity:0.06;
             transform:rotate(-30deg);
             pointer-events:none;
           }
 
           .line-input{
+
             display:flex;
+
             justify-content:space-between;
-            margin:6px 0;
-            font-size:13px;
+
+            margin:4px 0;
+
+            font-size:11px;
+
             font-weight:bold;
           }
 
           .line-input span{
+
             flex:1;
+
             border-bottom:1px dotted #000;
+
             margin-left:5px;
+
+            padding-left:4px;
           }
 
           .term-title{
-            margin-top:10px;
+
+            margin-top:8px;
+
             background:#eee;
-            padding:6px;
+
+            padding:5px;
+
+            font-size:12px;
+
             font-weight:bold;
+
             border-left:5px solid green;
           }
 
           table{
+
             width:100%;
+
             border-collapse:collapse;
-            font-size:10px;
-            margin-top:10px;
+
+            font-size:9px;
+
+            margin-top:8px;
           }
 
           th,td{
+
             border:1px solid #000;
-            padding:3px;
+
+            padding:2px;
+
             text-align:center;
+          }
+
+          img{
+            display:block;
+            margin:auto;
           }
 
           @page{
             size:A4 landscape;
-            margin:10mm;
+            margin:5mm;
           }
 
           @media print{
+
             body{
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+              -webkit-print-color-adjust:exact;
+              print-color-adjust:exact;
             }
 
             .report{
@@ -1222,23 +1385,47 @@ window.printAllReports = function () {
             .report:last-child{
               page-break-after:auto;
             }
+
           }
 
         </style>
+
       </head>
 
-      <body onload="window.print()">
+      <body>
+
         ${printContent}
+
+        <script>
+
+          window.onload = function(){
+
+            setTimeout(() => {
+
+              window.print();
+
+            }, 500);
+
+          }
+
+        <\/script>
+
       </body>
+
       </html>
+
     `);
 
     printWindow.document.close();
 
   } catch (err) {
+
     console.error(err);
+
     alert("Print error - check console");
+
   }
+
 };
 window.buildTable = function(all, terms) {
 
