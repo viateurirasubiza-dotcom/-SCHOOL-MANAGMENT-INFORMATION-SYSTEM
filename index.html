@@ -520,6 +520,8 @@ Upload School Logo
 
     <button onclick="printAllReports()">Print All Reports</button>
     <button onclick="clearAll()">Delete All</button>
+    <button onclick="deleteClassStudents()">Delete Class</button>
+<button onclick="loadClassStudents()">View Class Students</button>
 <select id="printClassSelect">
   <option value="">Select Class to Print</option>
   <option>P1</option>
@@ -1876,6 +1878,65 @@ window.clearAll = async function () {
     console.error(err);
     alert("Delete all failed");
   }
+};
+  window.loadClassStudents = function () {
+
+  let cls = document.getElementById("printClassSelect").value;
+
+  if (!cls) {
+    alert("Select class first");
+    return;
+  }
+
+  let students = JSON.parse(localStorage.getItem("students") || "[]");
+
+  let filtered = students.filter(s => s.class === cls);
+
+  let html = "";
+
+  filtered.forEach(s => {
+    html += `
+      <tr>
+        <td>${s.name}</td>
+        <td>${s.class}</td>
+        <td>${s.sdms || "-"}</td>
+        <td>
+          <button onclick="deleteStudent('${s.id}')">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html;
+};
+  window.deleteClassStudents = async function () {
+
+  let cls = document.getElementById("printClassSelect").value;
+
+  if (!cls) {
+    alert("Select class first");
+    return;
+  }
+
+  if (!confirm("Delete ALL students in " + cls + "?")) return;
+
+  const snap = await getDocs(collection(db, "students"));
+
+  let tasks = [];
+
+  snap.forEach(d => {
+    let data = d.data();
+
+    if (data.class === cls) {
+      tasks.push(deleteDoc(doc(db, "students", d.id)));
+    }
+  });
+
+  await Promise.all(tasks);
+
+  alert("Class deleted ✔");
+
+  window.load();
 };
 </script>
 </body>
