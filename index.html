@@ -1799,11 +1799,19 @@ document.getElementById("logoUpload").addEventListener("change", function(event)
 
   reader.readAsDataURL(file);
 });
-window.onload = function () {
-  window.loadLogo();
-  window.initLogoUpload();
-};
+window.addEventListener("DOMContentLoaded", async () => {
 
+  // load logo from firebase
+  if (window.loadLogoFromFirebase) {
+    await window.loadLogoFromFirebase();
+  }
+
+  // init upload system
+  if (window.initLogoUpload) {
+    window.initLogoUpload();
+  }
+
+});
 window.initLogoUpload = function () {
 
   const input = document.getElementById("logoUpload");
@@ -1811,35 +1819,76 @@ window.initLogoUpload = function () {
   input.addEventListener("change", function (event) {
 
     const file = event.target.files[0];
+
     if (!file) return;
 
     const reader = new FileReader();
 
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
 
       const logoData = e.target.result;
 
-      // 🔥 SAVE NEW LOGO (overwrite old one)
-      localStorage.setItem("schoolLogo", logoData);
-
       // SHOW LOGO IN UI
       const img = document.getElementById("schoolLogo");
+
       img.src = logoData;
       img.style.display = "block";
+
+      try {
+
+        // SAVE TO FIREBASE (GLOBAL)
+        await setDoc(doc(db, "settings", "school"), {
+          logo: logoData,
+          updatedAt: Date.now()
+        });
+
+        // OPTIONAL CACHE
+        localStorage.setItem("schoolLogo", logoData);
+
+        alert("Logo saved globally ✔");
+
+      } catch (err) {
+
+        console.error(err);
+
+        alert("Failed to save logo");
+
+      }
+
     };
 
     reader.readAsDataURL(file);
+
   });
+
 };
-window.loadLogo = function () {
+window.loadLogoFromFirebase = async function () {
 
-  const logo = localStorage.getItem("schoolLogo");
+  try {
 
-  if (logo) {
-    const img = document.getElementById("schoolLogo");
-    img.src = logo;
-    img.style.display = "block";
+    const snap = await getDoc(doc(db, "settings", "school"));
+
+    if (snap.exists()) {
+
+      const data = snap.data();
+
+      const img = document.getElementById("schoolLogo");
+
+      img.src = data.logo;
+
+      img.style.display = "block";
+
+      // optional cache
+      localStorage.setItem("schoolLogo", data.logo);
+
+    }
+
+  } catch (err) {
+
+    console.error("Logo load error:", err);
+
   }
+
 };
 window.deleteStudent = async function (id) {
 
